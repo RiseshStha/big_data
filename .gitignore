@@ -1,0 +1,13 @@
+# Ignore data directories (heavy CSV/parquet files)
+Data/
+Outputs/
+
+# Ignore Python cache and checkpoints
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db

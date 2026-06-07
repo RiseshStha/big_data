@@ -1,0 +1,70 @@
+=== DIRECT PAIRED COMPARISON ===
+
+Figure 2.1 (Random Forest Feature Importances):
+   Generated: model_3_feature_importance.png (size=(2998, 1983))
+   Extracted: image5.png (size=(2974, 1752))
+   Error: 6017.640625
+
+Figure 2.2 (Per-Class Accuracy by Tag Category):
+   Generated: model_2_class_accuracy.png (size=(2744, 1753))
+   Extracted: image4.png (size=(2786, 1753))
+   Error: 3359.04345703125
+
+Figure 2.3 (RF Classification Confusion Matrix):
+   Generated: model_1_confusion_matrix.png (size=(2508, 2393))
+   Extracted: image3.png (size=(3296, 2976))
+   Error: 4621.412109375
+
+Figure 2.4 (Linear Regression Log Score Scatter):
+   Generated: model_4_regression_predictions.png (size=(2096, 1826))
+   Extracted: image6.png (size=(2097, 1753))
+   Error: 1578.814697265625
+
+Figure 2.5 (Document Counts across LDA Topics):
+   Generated: model_7_topic_dist.png (size=(3306, 1752))
+   Extracted: image9.png (size=(3306, 1752))
+   Error: 0.0
+
+Figure 2.6 (LDA Topic-Word Weight Heatmap):
+   Generated: model_6_lda_topics_heatmap.png (size=(3836, 2298))
+   Extracted: image8.png (size=(3864, 2298))
+   Error: 4330.50439453125
+
+Figure 2.7 (LDA Model Selection Curves):
+   Generated: model_5_lda_elbow.png (size=(2730, 1637))
+   Extracted: image7.png (size=(4088, 1509))
+   Error: 2823.60693359375
+
+Figure 2.8 (Score Category Distribution):
+   Generated: eda_1_score_dist.png (size=(2235, 1522))
+   Extracted: image13.png (size=(2235, 1522))
+   Error: 3.282728672027588
+
+Figure 2.9 (Distribution of Top 20 tags):
+   Generated: eda_2_top_tags.png (size=(2869, 1982))
+   Extracted: image12.png (size=(2811, 1751))
+   Error: 7950.71533203125
+
+Figure 2.10 (Top 20 tags by Avg Upvote Score):
+   Generated: eda_3_avg_score.png (size=(2811, 1983))
+   Extracted: image11.png (size=(2847, 1752))
+   Error: 6331.41748046875
+
+Figure 2.11 (Question Growth Over Time):
+   Generated: eda_5_growth.png (size=(2467, 1521))
+   Extracted: image10.png (size=(2234, 1521))
+   Error: 1461.9267578125
+
+Figure 2.12 (Yearly Growth Trends of Top 5 tags):
+   Generated: eda_6_trends.png (size=(2672, 1751))
+   Extracted: image15.png (size=(3303, 1751))
+   Error: 1918.3863525390625
+
+Figure 2.13 (Closed vs. Open Questions Comparison):
+   Generated: eda_7_closed_open.png (size=(1729, 1520))
+   Extracted: image14.png (size=(4098, 1743))
+   Error: 9975.0966796875
+
+=== ADDITIONAL IMAGES ===
+image1.png: size=(857, 452), mode=RGBA, format=PNG
+image2.png: size=(548, 661), mode=RGBA, format=PNG

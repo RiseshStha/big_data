@@ -3,16 +3,16 @@ import time
 import sys
 import pandas as pd
 
-# ==========================================
+
 # FILE PATHS
-# ==========================================
+
 DATA_DIR       = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Data/"
 OUTPUT_DIR     = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Outputs/"
 PARQUET_PATH   = OUTPUT_DIR + "questions_clean.parquet"
 
-print("=" * 60)
+
 print("STARTING STACKOVERFLOW NLP CLASSIFICATION (PHASE 2)")
-print("=" * 60)
+
 global_start_time = time.time()
 
 # Ensure the output directory exists
@@ -22,10 +22,10 @@ try:
 except Exception as e:
     print(f"[WARNING] Could not create output directory: {e}")
 
-# ==========================================
+
 # 1. SETUP
-# ==========================================
-print("\n=== STEP 1: INITIALIZING SPARK & LOADING DATA ===")
+
+print("\n STEP 1: INITIALIZING SPARK & LOADING DATA ")
 step_start = time.time()
 try:
     from pyspark.sql import SparkSession
@@ -34,7 +34,7 @@ try:
     
     # MLlib pipeline and classifier modules
     from pyspark.ml import Pipeline
-    from pyspark.ml.feature import StringIndexer, Tokenizer, StopWordsRemover, HashingTF, IDF
+    from pyspark.ml.feature import StringIndexer, Tokenizer, StopWordsRemover, CountVectorizer, IDF
     from pyspark.ml.classification import RandomForestClassifier
     from pyspark.ml.evaluation import MulticlassClassificationEvaluator
     
@@ -71,10 +71,10 @@ except Exception as e:
 
 print(f"Setup and loading complete in {time.time() - step_start:.2f} seconds.")
 
-# ==========================================
+
 # 2. PREPARE LABELS AND STRATIFIED SAMPLE
-# ==========================================
-print("\n=== STEP 2: PREPARING CLASS LABELS AND STRATIFIED SAMPLING ===")
+
+print("\n STEP 2: PREPARING CLASS LABELS AND STRATIFIED SAMPLING ")
 step_start = time.time()
 # Note: Using stratified sampling by primary_tag is still highly representative big data,
 # while keeping local training execution times computationally feasible!
@@ -124,10 +124,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Stratified sampling failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 3. PREPARE FEATURES
-# ==========================================
-print("\n=== STEP 3: PREPARING FEATURES ===")
+
+print("\n STEP 3: PREPARING FEATURES ")
 step_start = time.time()
 try:
     # Cast text_length to double
@@ -143,10 +143,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Feature preparation failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 4. TRAIN/TEST SPLIT
-# ==========================================
-print("\n=== STEP 4: PERFORMING TRAIN/TEST SPLIT ===")
+
+print("\n STEP 4: PERFORMING TRAIN/TEST SPLIT ")
 step_start = time.time()
 try:
     train, test = df_ml.randomSplit([0.8, 0.2], seed=42)
@@ -164,10 +164,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Train/Test split failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 5. BUILD NLP PIPELINE
-# ==========================================
-print("\n=== STEP 5: BUILDING NLP PIPELINE ===")
+
+print("\n STEP 5: BUILDING NLP PIPELINE ")
 step_start = time.time()
 try:
     # StringIndexer
@@ -179,8 +179,8 @@ try:
     # StopWordsRemover
     remover = StopWordsRemover(inputCol="words", outputCol="filtered_words")
     
-    # HashingTF
-    hashingTF = HashingTF(inputCol="filtered_words", outputCol="raw_features", numFeatures=32768)
+    # CountVectorizer
+    countVectorizer = CountVectorizer(inputCol="filtered_words", outputCol="raw_features", vocabSize=32768, minDF=3.0)
     
     # IDF
     idf = IDF(inputCol="raw_features", outputCol="features", minDocFreq=3)
@@ -198,7 +198,7 @@ try:
     )
     
     # Assemble stages
-    pipeline = Pipeline(stages=[indexer, tokenizer, remover, hashingTF, idf, rf])
+    pipeline = Pipeline(stages=[indexer, tokenizer, remover, countVectorizer, idf, rf])
     
     print("Pipeline built successfully.")
     print(f"Pipeline construction complete in {time.time() - step_start:.4f} seconds.")
@@ -206,10 +206,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Pipeline assembly failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 6. TRAIN MODEL
-# ==========================================
-print("\n=== STEP 6: TRAINING RANDOM FOREST (estimated 2-5 mins on 100K rows) ===")
+
+print("\n STEP 6: TRAINING RANDOM FOREST (estimated 2-5 mins on 100K rows) ")
 training_start = time.time()
 try:
     model = pipeline.fit(train)
@@ -219,10 +219,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Model training failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 7. PREDICT
-# ==========================================
-print("\n=== STEP 7: MAKING PREDICTIONS ===")
+
+print("\n STEP 7: MAKING PREDICTIONS ")
 step_start = time.time()
 try:
     predictions = model.transform(test)
@@ -249,10 +249,10 @@ except Exception as e:
     print(f"[CRITICAL ERROR] Prediction stage failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 8. EVALUATE MODEL
-# ==========================================
-print("\n=== STEP 8: EVALUATING PERFORMANCE ===")
+
+print("\n STEP 8: EVALUATING PERFORMANCE ")
 step_start = time.time()
 try:
     evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
@@ -281,10 +281,10 @@ except Exception as e:
     print(f"[ERROR] Evaluation failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 9. CONFUSION MATRIX
-# ==========================================
-print("\n=== STEP 9: GENERATING CONFUSION MATRIX ===")
+
+print("\n STEP 9: GENERATING CONFUSION MATRIX ")
 step_start = time.time()
 try:
     crosstab_df = predictions.stat.crosstab("primary_tag", "predicted_label")
@@ -300,10 +300,10 @@ except Exception as e:
     print(f"[ERROR] Confusion matrix failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 10. PER-CLASS ACCURACY
-# ==========================================
-print("\n=== STEP 10: PER-CLASS ACCURACY ===")
+
+print("\n STEP 10: PER-CLASS ACCURACY ")
 step_start = time.time()
 try:
     per_class_data = []
@@ -335,27 +335,32 @@ except Exception as e:
     print(f"[ERROR] Per-class accuracy calculations failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 11. FEATURE IMPORTANCE
-# ==========================================
-print("\n=== STEP 11: EXTRACTING FEATURE IMPORTANCE ===")
+
+print("\n STEP 11: EXTRACTING FEATURE IMPORTANCE ")
 step_start = time.time()
 try:
     rf_model = model.stages[-1]
     importances = rf_model.featureImportances.toArray()
     top20_indices = importances.argsort()[-20:][::-1]
     
+    cv_model = model.stages[3]
+    vocab = cv_model.vocabulary
+    
     print("Top 10 Features by Importance:")
     feature_data = []
     for rank, idx in enumerate(top20_indices, 1):
         importance_val = importances[idx]
+        word = vocab[idx] if idx < len(vocab) else f"Feature {idx}"
         feature_data.append({
             "rank": rank,
             "feature_index": int(idx),
+            "word": word,
             "importance": float(importance_val)
         })
         if rank <= 10:
-            print(f"  Rank {rank:2d}: Feature {idx:<5d} (Importance: {importance_val:.6f})")
+            print(f"  Rank {rank:2d}: '{word}' (Index: {idx:<5d}, Importance: {importance_val:.6f})")
             
     # Save top 20 to CSV
     pd.DataFrame(feature_data).to_csv(os.path.join(OUTPUT_DIR, "feature_importances.csv"), index=False)
@@ -365,10 +370,10 @@ except Exception as e:
     print(f"[ERROR] Feature importance failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 12. EXPORT RESULTS
-# ==========================================
-print("\n=== STEP 12: EXPORTING SAMPLE RESULTS ===")
+
+print("\n STEP 12: EXPORTING SAMPLE RESULTS ")
 step_start = time.time()
 try:
     results_path = os.path.join(OUTPUT_DIR, "classification_results.csv")
@@ -393,15 +398,15 @@ try:
 except:
     pass
 
-# ==========================================
+
 # 13. SUMMARY
-# ==========================================
+
 total_elapsed_time = time.time() - global_start_time
 training_minutes = int(training_time // 60)
 training_seconds = int(training_time % 60)
 
 print("\n" + "=" * 60)
-print("=== PHASE 2 COMPLETE ===")
+print(" PHASE 2 COMPLETE ")
 print("=" * 60)
 print(f"Dataset:")
 print(f"- Full dataset:    1,264,216 rows")

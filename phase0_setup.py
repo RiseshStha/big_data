@@ -2,9 +2,9 @@ import os
 import time
 import sys
 
-# ==========================================
+#
 # FILE PATHS
-# ==========================================
+#
 DATA_DIR       = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Data/"
 OUTPUT_DIR     = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Outputs/"
 QUESTIONS_FILE = DATA_DIR + "Questions.csv"
@@ -12,15 +12,15 @@ ANSWERS_FILE   = DATA_DIR + "Answers.csv"
 TAGS_FILE      = DATA_DIR + "Tags.csv"
 PARQUET_OUTPUT = OUTPUT_DIR + "questions_clean.parquet"
 
-print("=" * 60)
+
 print("STARTING STACKOVERFLOW DATA PREPROCESSING (PHASE 0)")
-print("=" * 60)
+
 global_start_time = time.time()
 
-# ==========================================
+#
 # 1. IMPORTS
-# ==========================================
-print("\n=== STEP 1: IMPORTING PYSPARK MODULES ===")
+#
+print("\n STEP 1: IMPORTING PYSPARK MODULES ")
 step_start = time.time()
 try:
     from pyspark.sql import SparkSession
@@ -34,10 +34,10 @@ except ImportError as e:
     print("2. Ensure your Python interpreter matches the one where PySpark was installed.")
     sys.exit(1)
 
-# ==========================================
+#
 # 2. SPARK SESSION
-# ==========================================
-print("\n=== STEP 2: CREATING SPARK SESSION ===")
+#
+print("\n STEP 2: CREATING SPARK SESSION ")
 step_start = time.time()
 try:
     # Build SparkSession with the requested properties
@@ -59,10 +59,10 @@ except Exception as e:
     print("3. Check that your environment variables do not contain spaces or invalid characters in PATH.")
     sys.exit(1)
 
-# ==========================================
+#
 # 3. LOAD DATA
-# ==========================================
-print("\n=== STEP 3: LOADING DATASETS ===")
+#
+print("\n STEP 3: LOADING DATASETS ")
 
 # Create OUTPUT_DIR if missing
 try:
@@ -117,10 +117,10 @@ except Exception as e:
     sys.exit(1)
 
 
-# ==========================================
+#
 # 4. DATA CLEANING
-# ==========================================
-print("\n=== STEP 4: DATA CLEANING ===")
+#
+print("\n STEP 4: DATA CLEANING ")
 
 # To optimize intermediate counting operations on a 1.9GB file,
 # we will cache the initial cleaned DataFrame.
@@ -197,10 +197,10 @@ except Exception as e:
     sys.exit(1)
 
 
-# ==========================================
+#
 # 5. JOIN TAGS
-# ==========================================
-print("\n=== STEP 5: JOINING TAGS ===")
+#
+print("\n STEP 5: JOINING TAGS")
 step_start = time.time()
 try:
     print("Grouping Tags by 'Id' to aggregate tags list and string...")
@@ -226,10 +226,10 @@ except Exception as e:
     sys.exit(1)
 
 
-# ==========================================
+#
 # 6. SAVE AS PARQUET
-# ==========================================
-print("\n=== STEP 6: SAVING TO PARQUET ===")
+#
+print("\n STEP 6: SAVING TO PARQUET ")
 step_start = time.time()
 try:
     print(f"Writing final dataset to parquet format: {PARQUET_OUTPUT}")
@@ -251,12 +251,12 @@ try:
 except:
     pass
 
-# ==========================================
+#
 # 7. SUMMARY
-# ==========================================
+#
 total_elapsed_time = time.time() - global_start_time
 print("\n" + "=" * 60)
-print("=== PHASE 0 COMPLETE ===")
+print(" PHASE 0 COMPLETE ")
 print("=" * 60)
 print(f"- Questions loaded: {questions_count}")
 print(f"- After cleaning:   {after_cast_count}")

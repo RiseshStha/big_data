@@ -2,17 +2,17 @@ import os
 import time
 import sys
 
-# ==========================================
+
 # FILE PATHS
-# ==========================================
+
 DATA_DIR       = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Data/"
 OUTPUT_DIR     = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Outputs/"
 PARQUET_PATH   = OUTPUT_DIR + "questions_clean.parquet"
 TAGS_FILE      = DATA_DIR + "Tags.csv"
 
-print("=" * 60)
+
 print("STARTING STACKOVERFLOW EXPLORATORY DATA ANALYSIS (PHASE 1)")
-print("=" * 60)
+
 global_start_time = time.time()
 
 # Ensure the output directory exists
@@ -22,14 +22,14 @@ try:
 except Exception as e:
     print(f"[WARNING] Could not create output directory: {e}")
 
-# ==========================================
+
 # 1. SETUP & LOADING DATA
-# ==========================================
-print("\n=== STEP 1: INITIALIZING SPARK & LOADING DATA ===")
+
+print("\n STEP 1: INITIALIZING SPARK & LOADING DATA ")
 step_start = time.time()
 try:
     from pyspark.sql import SparkSession
-    from pyspark.sql.functions import col, desc, avg, count, round, when, year, lit
+    from pyspark.sql.functions import col, desc, avg, count, round, when, year, lit, array_contains
     print("Required PySpark modules imported successfully.")
 except ImportError as e:
     print(f"[CRITICAL ERROR] Failed to import PySpark: {e}")
@@ -60,7 +60,7 @@ try:
     # We explicitly drop the massive text columns (Body, Title, Body_clean, text)
     # to avoid Java OutOfMemory (OOM) heap space errors during caching.
     print("Applying column projection (dropping large text fields to optimize memory)...")
-    df = df_raw.select("Id", "Score", "CreationDate", "ClosedDate", "text_length", "tags_string")
+    df = df_raw.select("Id", "Score", "CreationDate", "ClosedDate", "text_length", "tags_string", "tag_list")
     
     # Now it is completely safe to cache the lightweight projected dataset.
     df.cache()
@@ -83,10 +83,10 @@ except Exception as e:
 
 print(f"Setup and loading complete in {time.time() - step_start:.2f} seconds.")
 
-# ==========================================
+
 # 2. BLOCK 1 — SCORE DISTRIBUTION
-# ==========================================
-print("\n=== BLOCK 1: SCORE DISTRIBUTION ===")
+
+print("\n BLOCK 1: SCORE DISTRIBUTION ")
 step_start = time.time()
 try:
     # Print basic summary statistics of Score
@@ -125,10 +125,10 @@ except Exception as e:
     print(f"[ERROR] Block 1 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 3. BLOCK 2 — TOP 50 TAGS
-# ==========================================
-print("\n=== BLOCK 2: TOP 50 TAGS ===")
+
+print("\n BLOCK 2: TOP 50 TAGS ")
 step_start = time.time()
 try:
     print("Calculating top tags counts...")
@@ -147,10 +147,10 @@ except Exception as e:
     print(f"[ERROR] Block 2 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 4. BLOCK 3 — AVERAGE SCORE BY TAG
-# ==========================================
-print("\n=== BLOCK 3: AVERAGE SCORE BY TAG ===")
+
+print("\n BLOCK 3: AVERAGE SCORE BY TAG ")
 step_start = time.time()
 try:
     print("Joining Tags with cleaned Questions to analyze average scores...")
@@ -174,10 +174,10 @@ except Exception as e:
     print(f"[ERROR] Block 3 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 5. BLOCK 4 — TEXT LENGTH ANALYSIS
-# ==========================================
-print("\n=== BLOCK 4: TEXT LENGTH ANALYSIS ===")
+
+print("\n BLOCK 4: TEXT LENGTH ANALYSIS ")
 step_start = time.time()
 try:
     print("Summary statistics for text_length:")
@@ -207,10 +207,10 @@ except Exception as e:
     print(f"[ERROR] Block 4 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 6. BLOCK 5 — TEMPORAL TREND
-# ==========================================
-print("\n=== BLOCK 5: QUESTIONS PER YEAR ===")
+
+print("\n BLOCK 5: QUESTIONS PER YEAR ")
 step_start = time.time()
 try:
     print("Extracting year and grouping questions...")
@@ -229,10 +229,10 @@ except Exception as e:
     print(f"[ERROR] Block 5 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 7. BLOCK 6 — TOP 5 TAGS OVER TIME
-# ==========================================
-print("\n=== BLOCK 6: TOP TAGS OVER TIME ===")
+
+print("\n BLOCK 6: TOP TAGS OVER TIME ")
 step_start = time.time()
 try:
     target_tags = ["python", "javascript", "java", "c#", "php"]
@@ -241,7 +241,7 @@ try:
     print("Filtering and computing yearly counts for target tags...")
     for tag in target_tags:
         print(f"  Processing tag: {tag}")
-        df_tag_time = df.filter(col("tags_string").contains(tag)) \
+        df_tag_time = df.filter(array_contains(col("tag_list"), tag)) \
                         .withColumn("year", year(col("CreationDate"))) \
                         .groupBy("year").count() \
                         .withColumn("tag", lit(tag)) \
@@ -265,22 +265,22 @@ except Exception as e:
     print(f"[ERROR] Block 6 failed: {e}")
     sys.exit(1)
 
-# ==========================================
+
 # 8. BLOCK 7 — CLOSED QUESTIONS ANALYSIS
-# ==========================================
-print("\n=== BLOCK 7: CLOSED QUESTIONS ===")
+
+print("\n BLOCK 7: CLOSED QUESTIONS ")
 step_start = time.time()
 try:
     print("Calculating closed vs open questions metrics...")
     
-    closed_count = df.filter(col("ClosedDate").isNotNull()).count()
-    open_count = df.filter(col("ClosedDate").isNull()).count()
+    closed_count = df.filter((col("ClosedDate").isNotNull()) & (col("ClosedDate") != "NA")).count()
+    open_count = df.filter((col("ClosedDate").isNull()) | (col("ClosedDate") == "NA")).count()
     
     print(f"Closed questions count: {closed_count}")
     print(f"Open questions count:   {open_count}")
     
     # Segment status and calculate aggregate metrics
-    df_status = df.withColumn("status", when(col("ClosedDate").isNotNull(), "closed").otherwise("open"))
+    df_status = df.withColumn("status", when((col("ClosedDate").isNotNull()) & (col("ClosedDate") != "NA"), "closed").otherwise("open"))
     df_closed_vs_open = df_status.groupBy("status").agg(
         count("*").alias("count"),
         round(avg("Score"), 2).alias("avg_score")
@@ -303,12 +303,12 @@ try:
 except:
     pass
 
-# ==========================================
+
 # 9. SUMMARY & VERIFICATION
-# ==========================================
+
 total_elapsed_time = time.time() - global_start_time
 print("\n" + "=" * 60)
-print("=== PHASE 1 COMPLETE ===")
+print(" PHASE 1 COMPLETE ")
 print("=" * 60)
 print("CSV files saved to OUTPUT_DIR:")
 

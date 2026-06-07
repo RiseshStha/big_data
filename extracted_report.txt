@@ -1,0 +1,110 @@
+[5] MSc Data Science and Computational Intelligence
+[6] Assignment Report Submitted 
+[7] By: Risesh Sama Shrestha
+[8] Coventry ID: 12980484 
+[9] Student ID: 220095
+[10] Submitted To: Lecturer Siddhartha Neupane
+[11] STW7082CEMs Big Data Management and Data Visualisation
+[13] Table of Contents
+[15] Table of Figures
+[16] Figure 1: Random Forest Classification Confusion Matrix Heatmap	7
+[17] Figure 2: Per-Class Accuracy by Tag Category	8
+[18] Figure 3: Random Forest Feature Importances for Top NLP Terms	8
+[19] Figure 4: Linear Regression Log Score - Actual vs. Predicted Scatter Plot	9
+[20] Figure 5: LDA Model Selection Elbow Curves for Log Perplexity and Log Likelihood	11
+[21] Figure 6: Latent Dirichlet Allocation Topic-Word Weight Heatmap	11
+[22] Figure 7: Document Counts Distribution across Discovered LDA Topics	12
+[23] Figure 8: Stack Overflow Platform Question Growth Over Time (2008-2016)	13
+[24] Figure 9: Top 20 Programming Tags Sorted by Average Upvote Score	13
+[25] Figure 10: Distribution of Top 20 Programming Language Tags by Question Volume	14
+[26] Figure 11: Stack Overflow Questions Score Category Distribution	14
+[27] Figure 12: Closed vs. Open Questions Volume and Average Score Comparison	15
+[28] Figure 13: Yearly Growth Trends of Top 5 Programming Tags	15
+[30] 1. Introduction
+[31] In the contemporary digital landscape, data generation has scaled exponentially, necessitating the adoption of specialized distributed computing systems. This academic report investigates the StackOverflow StackSample dataset through the five-dimensional framework of big data: Volume, Variety, Velocity, Veracity, and Value (5 v’s).
+[32] Table 1: The Five Vs of Big Data Applied to the Stack Overflow StackSample Dataset
+[34] Processing unstructured long-form HTML text at this scale poses significant computational challenges. Standard single-node tools like Python Pandas rely on single-threaded, in-memory execution, resulting in JVM heap space exhaustion or system-wide memory failure when processing over 1.26 million text rows and generating high-dimensional TF-IDF matrices. Consequently, Apache PySpark is utilised as the distributed computing framework to enable resilient distributed datasets and partition-based parallel execution across multiple cores.
+[35] This investigation pursues three primary analytical objectives: multi-class tag classification using a Random Forest classifier to predict the primary technology tag, quality score prediction using Linear Regression to examine textual influences on scores, and unsupervised Latent Dirichlet Allocation (LDA) to discover latent themes. Tableau is utilised to construct interactive dashboards representing these analytical phases. Table 2 summarises all results across the four analytical phases.
+[36] Table 2: Summary of All Phase Results
+[38] 2. Implementation
+[39] 2.1 Dataset Description
+[40] The empirical research utilises the public StackSample dataset, a representative 10% subset of the official Stack Exchange Data Dump. Freely accessible on Kaggle (Kaggle, 2019), it contains three CSV files: Questions.csv (1,264,216 rows, 7 columns), Answers.csv (2,014,516 rows), and Tags.csv (3,750,994 rows, 2 columns). For this project, Questions.csv is inner-joined with Tags.csv to map technology tag categories to their corresponding question text.
+[41] The pipeline processes five distinct data types, satisfying data variety requirements: integers (Id, Score), long-form HTML text (Body), short title strings (Title), temporal timestamps (CreationDate), and categorical tag strings (Tag).
+[42] To ensure clean numerical inputs for machine learning, preprocessing is executed sequentially in PySpark: 1) HTML tags are removed using regular expressions (<[^>]+>); 2) Null value filtering confirms complete records in core columns (Title, Body, Score); 3) Title and Body are concatenated into a unified text column; 4) A logarithmic transformation (log1p) is applied to compress the highly right-skewed score distribution; 5) Multiple tag rows are aggregated and inner-joined to the questions schema.
+[43] 2.2 Environment and Configuration
+[44] The distributed environment is established on Windows 11 using Apache Spark 3.5.8 and Python 3.10. The SparkSession is configured with a 4GB driver memory allocation and 50–100 shuffle partitions optimised for local parallel execution.
+[45] Apache Spark operates on a master-worker driver-executor architecture. The driver program coordinates application flow, schedules tasks, and compiles directed acyclic graphs. Independent executor processes perform partition-level operations in parallel. This distributed in-memory computation is essential: constructing high-dimensional TF-IDF vectors across 1.26 million rows would exhaust physical memory on single-node systems. PySpark bypasses this by partitioning data blocks across processor cores.
+[46] 2.3 Task 1: Tag Classification (Random Forest)
+[47] The classification workflow is implemented via a six-stage NLP pipeline in PySpark MLlib: Tokenizer segments text into words; StopWordsRemover filters common prepositions and pronouns; HashingTF maps tokens into a 32,768-dimensional sparse term-frequency vector; IDF scales features to penalise ubiquitous terms; StringIndexer encodes categorical tag targets; and a Random Forest Classifier (50 decision trees, depth 10, subsampling rate 0.8) trains on the feature vectors.
+[48] To prevent class imbalance and maintain computational feasibility, stratified sampling extracts 20,000 records per tag class. The balanced dataset of 200,074 rows is split into an 80% training set (160,236 rows) and a 20% test set (39,838 rows) across the top ten technology tags.
+[49] Random Forest is preferred over multinomial Logistic Regression because it handles sparse high-dimensional TF-IDF vectors without feature scaling or regularisation tuning, supports multi-class classification natively, resists overfitting, and generates feature importance scores for post-hoc interpretability.
+[50] The model achieved an overall accuracy of 71.31%, F1-score of 0.7076, weighted precision of 0.7204, and recall of 0.7131, completing training in 6 minutes and 35 seconds. Table 3 presents the accuracy across all ten tag classes.
+[51] Table 3: Per-Class Classification Accuracy by Technology Tag
+[54] Figure 1: Random Forest Classification Confusion Matrix Heatmap
+[56] Figure 2: Per-Class Accuracy by Tag Category
+[58] Figure 3: Random Forest Feature Importances for Top NLP Terms
+[60] 2.4 Task 2: Score Prediction (Linear Regression)
+[61] The regression pipeline predicts question scores based on textual properties. It mirrors the classification pipeline's NLP phases, employing tokenization, stop word removal, HashingTF (16,384 features), and IDF scaling. A VectorAssembler combines the sparse TF-IDF vector with a numerical text_length feature. This assembly feeds into a Linear Regression estimator (maximum 10 iterations, regularisation 0.1, ElasticNet mixing 0.5 to balance L1 and L2 penalties).
+[62] The target variable (Score) is heavily skewed (mean 1.78, range -73 to 5,190). A log1p transformation compresses the distribution and stabilizes residual variance. The model is trained on a stratified sample of 100,000 questions (Score ≥ 0), split into an 80/20 train/test partition.
+[63] Linear Regression is selected to establish an interpretable baseline for textual influence on community votes. The model achieved an RMSE of 0.7556 on the log scale (21.95 original) and an R-squared of -0.0001 (statistically equivalent to zero). This near-zero R-squared indicates that text features and question length explain virtually no score variance. Question scores are driven by external factors such as author reputation, submission timing, and algorithmic visibility rather than linguistic attributes.
+[65] Figure 4: Linear Regression Log Score - Actual vs. Predicted Scatter Plot
+[66] 2.5 Task 3: LDA Topic Modelling
+[67] To discover latent topics, unsupervised LDA is applied to 100,000 question samples. CountVectorizer is used instead of HashingTF because LDA requires an invertible vocabulary index to map terms back to topics. The optimal number of topics was programmatically determined as k=10 by training candidate models (k in [5, 8, 10, 12]) and finding the perplexity elbow point. The final LDA model was trained with k=10, 5 max iterations, vocabulary size of 5,000, minimum document frequency of 10.0, and an online variational Bayes optimiser.
+[68] The optimal model completed training in 198.96 seconds, yielding a log perplexity of 2.8337 and log likelihood of -53,131,199.45. Table 4 details the discovered topics, their document distribution counts, and representative top vocabulary terms.
+[69] Table 4: LDA Topic Model Results: 10 Discovered Programming Topics
+[72] Figure 5: LDA Model Selection Elbow Curves for Log Perplexity and Log Likelihood
+[75] Figure 6: Latent Dirichlet Allocation Topic-Word Weight Heatmap
+[77] Figure 7: Document Counts Distribution across Discovered LDA Topics
+[78] The dominance of Topic: public / var / void (40,640 documents) reflects structural programming queries. Topic: server / user / app (31,820 documents) and Topic: table (19,961 documents) highlight developer discussion on web frontends, deployments, and database schemas, which is consistent with a platform dedicated to troubleshooting.
+[79] 2.6 Tableau Visualisation
+[80] Tableau is used to synthesise these findings into six interactive dashboards built from the processed PySpark CSV exports.
+[81] The Tag Frequency Tree map (top_tags.csv) confirms JavaScript's dominance with 124,155 questions. The Average Score by Tag horizontal bar chart (avg_score_by_tag.csv) shows .NET achieving the highest average score (3.28), indicating an expert user base. The StackOverflow Growth Over Time line chart (questions_per_year.csv) details exponential question growth from 2008 to a peak of 230,022 in 2015, followed by a slight decline in 2016.
+[83] Figure 8: Stack Overflow Platform Question Growth Over Time (2008-2016)
+[86] Figure 9: Top 20 Programming Tags Sorted by Average Upvote Score
+[88] Figure 10: Distribution of Top 20 Programming Language Tags by Question Volume
+[90] Figure 11: Stack Overflow Questions Score Category Distribution
+[91] The Confusion Heatmap (confusion_matrix.csv) displays predicted vs. actual classes, showing a strong diagonal and highlighting the expected JavaScript-jQuery vocabulary overlap. The LDA Keyword Heatmap (lda_topics.csv) maps topics against vocabulary weights, illustrating distinct semantic clusters. The Actual vs. Predicted Scatter Plot (regression_predictions.csv) shows predicted scores compressing heavily around the log mean, corroborating the near-zero R-squared regression results.
+[93] Figure 12: Closed vs. Open Questions Volume and Average Score Comparison
+[95] Figure 13: Yearly Growth Trends of Top 5 Programming Tags
+[96] 3. Discussion
+[97] The classification accuracy of 71.31% on a ten-class NLP problem represents a highly successful outcome. Compared to a random baseline of 10%, the Random Forest classifier successfully extracts strong predictive text signals from unstructured questions using basic bag-of-words features.
+[98] Class accuracy varies significantly based on vocabulary uniqueness. Python and iOS achieve the highest accuracy (89.29% and 88.42%) due to distinct tokens (e.g., numpy, pandas, UIKit, Swift, storyboard) that rarely appear in other domains. Conversely, JavaScript achieves the lowest accuracy (43.82%) due to massive vocabulary overlapping with HTML, CSS, and jQuery. The 1,018 test-set misclassifications between JavaScript and jQuery are semantically expected, as developers discussing jQuery natively use JavaScript code and share web browser error environments.
+[99] The near-zero R-squared value (-0.0001) confirms that question scores are not determined by linguistic properties or text length. This aligns with StackOverflow's sociotechnical dynamics: scores are driven by external factors such as author reputation, peak submission timing windows, topic popularity, and algorithmic thread visibility.
+[100] The final LDA model's log perplexity of 2.8337 demonstrates semantically distinct and coherent topic separation. The emergence of Topic: public / var / void as the dominant thematic cluster (40,640 documents) accurately maps to the high volume of structural debugging queries in the corpus.
+[101] The study has four limitations: 1) The TF-IDF pipeline uses a bag-of-words model that disregards syntax and word order; 2) Subjective human interpretation is required to assign semantic labels to LDA topics; 3) Community score is an imperfect proxy for question quality due to SEO and traffic variance; 4) Stratified sampling constraints (200,000 and 100,000 rows) limit the models' exposure to rare edge cases in the full dataset.
+[102] 4. Conclusion
+[103] This investigation executed a multi-task big data analytical pipeline on the StackOverflow dataset. The 5 Vs analysis confirmed the big data characteristics of the corpus, and PySpark was demonstrated as essential to prevent memory exhaustion during high-dimensional NLP feature engineering across 1.26 million rows.
+[104] The PySpark models successfully achieved 71.31% classification accuracy and extracted 10 coherent LDA topics (log perplexity 2.8337), while regression confirmed that question scores are independent of textual quality.
+[105] Future work should replace the bag-of-words pipeline with dense neural architectures like Word2Vec or transformer embeddings (BERT) to capture word order. Additionally, integrating metadata features (author reputation, timestamps) would improve regression score predictions.
+[106] 5. References
+[107] Apache Spark (2024) Machine learning library (MLlib) guide. Available at: https://spark.apache.org/docs/latest/ml-guide.html (Accessed: 28 May 2026).
+[108] Blei, D.M., Ng, A.Y. and Jordan, M.I. (2003) ‘Latent Dirichlet Allocation’, Journal of Machine Learning Research, 3, pp. 993–1022 Available at: https://www.scirp.org/reference/referencespapers?referenceid=1292772..
+[109] Breiman, L. (2001) random forests. Machine Learning, 45, 5-32. - references - scientific research publishing. Available at: https://www.scirp.org/reference/referencespapers?referenceid=1734556.
+[110] Build and Debug (2024) Creating a Spark session in PySpark: A step-by-step guide with real-time scenarios. Medium. Available at: https://medium.com/@BuildandDebug/creating-a-spark-session-in-pyspark-a-step-by-step-guide-with-real-time-scenarios-55a64dac2a79 (Accessed: 28 May 2026).
+[111] Bulut, O. and Desjardins, C. (2021) ‘Visualising big data’, in Exploring, Visualising, and Modelling Big Data with R. Available at: https://okanbulut.github.io/bigdata/visualizing-big-data.html (Accessed: 28 May 2026).
+[112] DataCamp (2024) PySpark tutorial: Getting started with PySpark. Available at: https://www.datacamp.com/tutorial/pyspark-tutorial-getting-started-with-pyspark (Accessed: 28 May 2026).
+[113] IBM (2023) What are the 5 Vs of big data? Available at: https://www.ibm.com/think/topics/big-data (Accessed: 28 May 2026).
+[114] Kaggle (2019) StackSample: 10% of Stack Overflow Q&A. Available at: https://www.kaggle.com/datasets/stackoverflow/stacksample (Accessed: 28 May 2026).
+[115] Kavlakoglu, E. (2025) What is latent Dirichlet allocation? IBM. Available at: https://www.ibm.com/think/topics/latent-dirichlet-allocation (Accessed: 28 May 2026).
+[116] Stack Overflow (2026) Stack Exchange Data Dump. Available at: https://archive.org/details/stackexchange (Accessed: 28 May 2026).
+[117] Tableau (2024) Data visualisation tips and best practices. Available at: https://www.tableau.com/visualization/data-visualization-best-practices (Accessed: 28 May 2026).
+[118] Use Data To Lead (2023) Five principles of data visualisation. Available at: https://www.usedatatolead.com/en/post/funf-prinzipien-der-datenvisualisierung (Accessed: 28 May 2026).
+[119] Williams, D. (2026) Five steps to tackle big graph data visualisation. Cambridge Intelligence. Available at: https://cambridge-intelligence.com/blog/big-graph-data-visualization/ (Accessed: 28 May 2026).
+[138] 6. Appendix
+[139] GitHub Link: -
+[140] Dataset Link: - https://www.kaggle.com/datasets/stackoverflow/stacksample 
+[141] Tableau Dashboard Links: - https://public.tableau.com/views/Bigdatavisualization_17807285490190/YearlyGrowthofTop5Tags?:language=en-US&publish=yes&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link
+[142] Tableau Visualisation
+[161] Code
+[197] 
+SOFTWARE INSTALLATION & RUN SCREENSHOTS
+
+[198] Spark Local Installation Verification
+[202] PySpark Execution: Setup & Cleaning (Phase 0) 
+--- TABLE 0 ---
+Dimension | Description | Application to This Dataset
+Volume | Scale of data | 1,264,216 questions and 3,750,994 tag records. Long-form HTML body text occupies several gigabytes of raw string data, far exceeding the capacity of single-machine processing tools.
+Variety | Diversity of data types | Five distinct types present: integers (Id, Score), temporal timestamps (CreationDate), short strings (Title), categorical labels (Tag), and long-form unstructured HTML text (Body). This heterogeneity demands diverse preprocessing strategies.
+Velocity | Speed of generation | Stack Overflow has accumulated over 50 million questions since its 2008 launch through continuous real-time submission by global developers. New questions are generated at all hours across time zones.
+Veracity | Trustworthiness of data | Community-moderated through upvotes, downvotes, accepted answers, and moderator edits. However, scores may reflect social factors (author reputation, timing) rather than intrinsic question quality, introducing statistical noise.
+Value | Business and social utility | Analyzing this corpus enables tag prediction, quality assessment, and topic discovery — providing actionable insights for platform recommendation systems, developer onboarding tools, and educational content curation.

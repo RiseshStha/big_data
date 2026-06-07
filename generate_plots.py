@@ -3,12 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 # Set paths
 OUTPUT_DIR = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Outputs/"
 PLOT_DIR = os.path.join(OUTPUT_DIR, "Plots")
 os.makedirs(PLOT_DIR, exist_ok=True)
-
 # Set visual style
 sns.set_theme(style="whitegrid", context="talk", palette="muted")
 plt.rcParams.update({
@@ -23,20 +21,16 @@ plt.rcParams.update({
     'figure.dpi': 300,
     'savefig.bbox': 'tight'
 })
-
 # Custom Color Palette
 MAIN_COLOR = "#2c7fb8"
 ACCENT_COLOR = "#7fcdbb"
 HIGHLIGHT_COLOR = "#31a354"
 DARK_GREY = "#4f4f4f"
 
-print("=" * 60)
 print("STARTING ALL PLOT GENERATION")
-print("=" * 60)
 
-# ==========================================
 # 1. SCORE DISTRIBUTION
-# ==========================================
+
 print("Generating Plot 1: Score Distribution...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "score_distribution.csv"))
@@ -63,9 +57,8 @@ try:
 except Exception as e:
     print(f"Error Plot 1: {e}")
 
-# ==========================================
 # 2. TOP 20 TAGS
-# ==========================================
+
 print("Generating Plot 2: Top 20 Tags...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "top_tags.csv"))
@@ -89,9 +82,8 @@ try:
 except Exception as e:
     print(f"Error Plot 2: {e}")
 
-# ==========================================
 # 3. AVERAGE SCORE BY TAG
-# ==========================================
+
 print("Generating Plot 3: Average Score by Tag...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "avg_score_by_tag.csv"))
@@ -115,9 +107,8 @@ try:
 except Exception as e:
     print(f"Error Plot 3: {e}")
 
-# ==========================================
 # 4. TEXT LENGTH VS SCORE
-# ==========================================
+
 print("Generating Plot 4: Text Length vs Score...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "length_vs_score.csv"))
@@ -136,9 +127,8 @@ try:
 except Exception as e:
     print(f"Error Plot 4: {e}")
 
-# ==========================================
 # 5. QUESTIONS PER YEAR
-# ==========================================
+
 print("Generating Plot 5: Questions per Year...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "questions_per_year.csv"))
@@ -161,9 +151,8 @@ try:
 except Exception as e:
     print(f"Error Plot 5: {e}")
 
-# ==========================================
 # 6. TOP TAGS TRENDS
-# ==========================================
+
 print("Generating Plot 6: Top Tags Trends...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "top_tags_over_time.csv"))
@@ -187,9 +176,8 @@ try:
 except Exception as e:
     print(f"Error Plot 6: {e}")
 
-# ==========================================
 # 7. CLOSED VS OPEN
-# ==========================================
+
 print("Generating Plot 7: Closed vs Open...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "closed_vs_open.csv"))
@@ -225,13 +213,13 @@ try:
 except Exception as e:
     print(f"Error Plot 7: {e}")
 
-# ==========================================
 # 8. CONFUSION MATRIX HEATMAP
-# ==========================================
+
 print("Generating Plot 8: Confusion Matrix Heatmap...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "confusion_matrix.csv"))
     df = df.set_index("primary_tag_predicted_label")
+    df = df.reindex(index=df.columns)
     
     plt.figure(figsize=(10, 8))
     sns.heatmap(df, annot=True, fmt="d", cmap="Blues", cbar=True, linewidths=0.5, linecolor="#eeeeee")
@@ -245,9 +233,8 @@ try:
 except Exception as e:
     print(f"Error Plot 8: {e}")
 
-# ==========================================
 # 9. PER-CLASS ACCURACY
-# ==========================================
+
 print("Generating Plot 9: Per-Class Accuracy...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "per_class_accuracy.csv"))
@@ -271,21 +258,19 @@ try:
 except Exception as e:
     print(f"Error Plot 9: {e}")
 
-# ==========================================
 # 10. FEATURE IMPORTANCES
-# ==========================================
+
 print("Generating Plot 10: Feature Importances...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "feature_importances.csv"))
     df_top20 = df.head(20).copy()
-    df_top20["Feature"] = df_top20["feature_index"].apply(lambda idx: f"Term Hash #{idx}")
     df_top20 = df_top20.sort_values("importance", ascending=True)
     
     plt.figure(figsize=(10, 7))
-    ax = sns.barplot(x="importance", y="Feature", data=df_top20, color=MAIN_COLOR, edgecolor="black", linewidth=0.8)
+    ax = sns.barplot(x="importance", y="word", data=df_top20, color=MAIN_COLOR, edgecolor="black", linewidth=0.8)
     plt.title("Random Forest NLP Feature Importances (Top 20 Terms)", pad=15, fontweight="bold")
     plt.xlabel("Relative Importance Score", labelpad=10)
-    plt.ylabel("Feature Index", labelpad=10)
+    plt.ylabel("Vocabulary Term", labelpad=10)
     
     # Annotate values
     for p in ax.patches:
@@ -297,9 +282,8 @@ try:
 except Exception as e:
     print(f"Error Plot 10: {e}")
 
-# ==========================================
 # 11. REGRESSION PREDICTIONS SCATTER
-# ==========================================
+
 print("Generating Plot 11: Regression Predictions Scatter...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "regression_predictions.csv"))
@@ -322,9 +306,8 @@ try:
 except Exception as e:
     print(f"Error Plot 11: {e}")
 
-# ==========================================
 # 12. LDA MODEL SELECTION CURVES
-# ==========================================
+
 print("Generating Plot 12: LDA Model Selection curves...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "lda_k_selection.csv"))
@@ -355,9 +338,8 @@ try:
 except Exception as e:
     print(f"Error Plot 12: {e}")
 
-# ==========================================
 # 13. LDA TOPIC KEYWORD HEATMAP
-# ==========================================
+
 print("Generating Plot 13: LDA Topic Keyword Heatmap...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "lda_topics.csv"), keep_default_na=False)
@@ -385,9 +367,8 @@ try:
 except Exception as e:
     print(f"Error Plot 13: {e}")
 
-# ==========================================
 # 14. DOMINANT TOPIC DISTRIBUTION
-# ==========================================
+
 print("Generating Plot 14: Dominant Topic Distribution...")
 try:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, "topic_distribution.csv"))
@@ -408,7 +389,6 @@ try:
     plt.close()
 except Exception as e:
     print(f"Error Plot 14: {e}")
-
 print("=" * 60)
 print("ALL PLOTS GENERATED SUCCESSFULLY UNDER Outputs/Plots/")
 print("=" * 60)

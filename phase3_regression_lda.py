@@ -4,22 +4,19 @@ import sys
 import pandas as pd
 import numpy as np
 
-# Fix Windows console encoding: force UTF-8 to handle Unicode vocabulary
-# words extracted from StackOverflow code blocks (e.g., box-drawing chars)
+
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 if sys.stderr.encoding != 'utf-8':
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-# ==========================================
+
 # FILE PATHS
-# ==========================================
 OUTPUT_DIR   = "D:/Data Science/Big Data and Data Visualization/Assignment/Project/Outputs/"
 PARQUET_PATH = OUTPUT_DIR + "questions_clean.parquet"
 
-print("=" * 60)
 print("STARTING REGRESSION & LDA TOPIC MODELLING (PHASE 3)")
-print("=" * 60)
+
 global_start_time = time.time()
 
 # Ensure output folder exists
@@ -29,10 +26,9 @@ try:
 except Exception as e:
     print(f"[WARNING] Could not create output directory: {e}")
 
-# ==========================================
+
 # 1. SETUP
-# ==========================================
-print("\n=== STEP 1: INITIALIZING SPARK SESSION ===")
+print("\n STEP 1: INITIALIZING SPARK SESSION ")
 step_start = time.time()
 try:
     from pyspark.sql import SparkSession
@@ -81,12 +77,12 @@ except Exception as e:
 print(f"Setup and loading complete in {time.time() - step_start:.2f} seconds.")
 
 
-# ==========================================
+
 # TASK — PART A: LINEAR REGRESSION
-# ==========================================
+
 
 # 2. PREPARE REGRESSION SAMPLE
-print("\n=== STEP 2: PREPARING REGRESSION DATA SAMPLE ===")
+print("\n STEP 2: PREPARING REGRESSION DATA SAMPLE ")
 step_start = time.time()
 try:
     # Filter for non-negative scores only
@@ -120,7 +116,7 @@ except Exception as e:
     sys.exit(1)
 
 # 3. TRAIN/TEST SPLIT
-print("\n=== STEP 3: PERFORMING REGRESSION SPLIT ===")
+print("\n STEP 3: PERFORMING REGRESSION SPLIT ")
 step_start = time.time()
 try:
     train_reg, test_reg = df_reg.randomSplit([0.8, 0.2], seed=42)
@@ -139,7 +135,7 @@ except Exception as e:
     sys.exit(1)
 
 # 4. BUILD LINEAR REGRESSION PIPELINE
-print("\n=== STEP 4: BUILDING LINEAR REGRESSION NLP PIPELINE ===")
+print("\n STEP 4: BUILDING LINEAR REGRESSION NLP PIPELINE ")
 step_start = time.time()
 try:
     # Tokenizer
@@ -184,7 +180,7 @@ except Exception as e:
     sys.exit(1)
 
 # 5. TRAIN REGRESSION MODEL
-print("\n=== STEP 5: TRAINING LINEAR REGRESSION (estimated 2-5 mins) ===")
+print("\n STEP 5: TRAINING LINEAR REGRESSION (estimated 2-5 mins) ")
 training_start = time.time()
 try:
     model_reg = pipeline_reg.fit(train_reg)
@@ -195,7 +191,7 @@ except Exception as e:
     sys.exit(1)
 
 # 6. EVALUATE REGRESSION MODEL
-print("\n=== STEP 6: EVALUATING REGRESSION PERFORMANCE ===")
+print("\n STEP 6: EVALUATING REGRESSION PERFORMANCE ")
 step_start = time.time()
 try:
     predictions_reg = model_reg.transform(test_reg)
@@ -238,7 +234,7 @@ except Exception as e:
     sys.exit(1)
 
 # 7. EXPORT REGRESSION RESULTS & BUCKET ANALYSIS
-print("\n=== STEP 7: EXPORTING REGRESSION PREDICTIONS & BUCKET ANALYSIS ===")
+print("\n STEP 7: EXPORTING REGRESSION PREDICTIONS & BUCKET ANALYSIS ")
 step_start = time.time()
 try:
     # Save top 5000 prediction samples
@@ -288,12 +284,12 @@ except Exception as e:
     sys.exit(1)
 
 
-# ==========================================
+
 # TASK — PART B: LDA TOPIC MODELLING
-# ==========================================
+
 
 # 8. PREPARE LDA SAMPLE
-print("\n=== STEP 8: PREPARING LDA DATA SAMPLE ===")
+print("\n STEP 8: PREPARING LDA DATA SAMPLE ")
 step_start = time.time()
 try:
     # Uncache regression datasets to free local JVM memory
@@ -326,7 +322,7 @@ except Exception as e:
     sys.exit(1)
 
 # 9. BUILD TEXT PREPROCESSING PIPELINE (fit once, reuse for all k values)
-print("\n=== STEP 9: BUILDING TEXT PREPROCESSING PIPELINE ===")
+print("\n STEP 9: BUILDING TEXT PREPROCESSING PIPELINE ")
 step_start = time.time()
 try:
     # Tokenizer
@@ -368,7 +364,7 @@ except Exception as e:
     sys.exit(1)
 
 # 10. OPTIMAL K SELECTION — Determine the best number of topics (Elbow Method)
-print("\n=== STEP 10: FINDING OPTIMAL NUMBER OF TOPICS (k) ===")
+print("\n STEP 10: FINDING OPTIMAL NUMBER OF TOPICS (k) ")
 print("Testing multiple k values using Log Perplexity and Log Likelihood...")
 print("(This is analogous to the Elbow Method in K-Means clustering)")
 step_start = time.time()
@@ -423,7 +419,7 @@ except Exception as e:
     sys.exit(1)
 
 # 11. TRAIN FINAL LDA MODEL WITH OPTIMAL K
-print(f"\n=== STEP 11: TRAINING FINAL LDA MODEL (k={optimal_k}, data-driven) ===")
+print(f"\n STEP 11: TRAINING FINAL LDA MODEL (k={optimal_k}, data-driven) ")
 training_start = time.time()
 try:
     lda_final = LDA(k=optimal_k, maxIter=5, featuresCol="features", optimizer="online", seed=42)
@@ -435,7 +431,7 @@ except Exception as e:
     sys.exit(1)
 
 # 12. EXTRACT AND LABEL TOPICS DYNAMICALLY
-print(f"\n=== STEP 12: EXTRACTING TOPICS (k={optimal_k}) ===")
+print(f"\n STEP 12: EXTRACTING TOPICS (k={optimal_k}) ")
 step_start = time.time()
 try:
     topics_df = model_lda.describeTopics(maxTermsPerTopic=10)
@@ -481,7 +477,7 @@ except Exception as e:
     sys.exit(1)
 
 # 13. EVALUATE FINAL LDA MODEL
-print("\n=== STEP 13: EVALUATING FINAL LDA MODEL PERFORMANCE ===")
+print("\n STEP 13: EVALUATING FINAL LDA MODEL PERFORMANCE ")
 step_start = time.time()
 try:
     transformed_lda = model_lda.transform(df_vectorized)
@@ -498,7 +494,7 @@ except Exception as e:
     sys.exit(1)
 
 # 14. EXPORT LDA RESULTS & TOPIC DISTRIBUTION
-print("\n=== STEP 14: EXPORTING LDA TOPICS & TOPIC DISTRIBUTION ===")
+print("\n STEP 14: EXPORTING LDA TOPICS & TOPIC DISTRIBUTION ")
 step_start = time.time()
 try:
     # Save Topics terms list
@@ -569,9 +565,9 @@ try:
 except:
     pass
 
-# ==========================================
+
 # 15. FINAL SUMMARY
-# ==========================================
+
 total_elapsed_time = time.time() - global_start_time
 reg_minutes = int(training_time_reg // 60)
 reg_seconds = int(training_time_reg % 60)
@@ -579,7 +575,7 @@ lda_minutes = int(training_time_lda // 60)
 lda_seconds = int(training_time_lda % 60)
 
 print("\n" + "=" * 60)
-print("=== PHASE 3 COMPLETE ===")
+print(" PHASE 3 COMPLETE ")
 print("=" * 60)
 print(f"REGRESSION (Linear Regression):")
 print(f"- Sample size:          {reg_rows} rows")
